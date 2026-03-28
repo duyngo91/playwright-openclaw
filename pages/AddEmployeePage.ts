@@ -33,6 +33,22 @@ export class AddEmployeePage {
     await this.saveButton.click();
   }
 
+  get employeeIdInput() {
+    // The Employee Id field is inside a container with class 'oxd-input-group' that contains the label text
+    return this.page.locator('div.oxd-input-group:has-text("Employee Id") input');
+  }
+
+  get errorMessage() {
+    // Check for toast messages, alerts, or inline validation messages near Employee Id field
+    const toast = this.page.locator('.oxd-toast-content, .oxd-toast--error, [role="alert"]');
+    const inline = this.employeeIdInput.locator('xpath=following-sibling::*[1]');
+    return toast.or(inline);
+  }
+
+  async fillEmployeeId(id: string) {
+    await this.employeeIdInput.fill(id);
+  }
+
   async waitForDetailsPage() {
     // After save, the page navigates to the employee details page
     await this.page.waitForURL(/viewPersonalDetails/);
