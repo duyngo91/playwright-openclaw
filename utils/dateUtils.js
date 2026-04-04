@@ -1,43 +1,58 @@
 /**
- * Chuyển đổi ngày tháng giữa các định dạng khác nhau.
- * @param {string} dateStr - Chuỗi ngày đầu vào.
- * @param {string} inputFormat - Định dạng của ngày đầu vào (VD: "YYYY-MM-DD", "DD/MM/YYYY").
- * @param {string} outputFormat - Định dạng mong muốn đầu ra.
- * @returns {string} Chuỗi ngày đã được định dạng lại.
+ * Chuyển đổi định dạng ngày tháng.
+ * @param {string} dateString - Chuỗi ngày gốc (VD: "2026-04-04")
+ * @param {string} inputFormat - Định dạng ngày gốc (VD: "YYYY-MM-DD")
+ * @param {string} outputFormat - Định dạng ngày mong muốn (VD: "DD/MM/YYYY")
  */
-function formatDate(dateStr, inputFormat, outputFormat) {
-    if (!dateStr || !inputFormat || !outputFormat) return "";
+function formatDate(dateString, inputFormat, outputFormat) {
+    if (!dateString || !inputFormat || !outputFormat) return "";
 
-    // Tách các thành phần ngày/tháng/năm từ chuỗi gốc
-    const tokens = inputFormat.split(/[-\/. ]/);
-    const values = dateStr.split(/[-\/. ]/);
+    // Tách các ký tự phân cách
+    const separators = inputFormat.match(/[^A-Za-z]/g) || [];
+    const delimiter = separators.length > 0 ? separators[0] : '';
     
-    if (tokens.length !== values.length) return "Invalid Format";
+    // Tách chuỗi ngày gốc thành mảng
+    const parts = dateString.split(delimiter);
+    const tokens = inputFormat.split(delimiter);
+    
+    let year, month, day;
 
-    let year = 0, month = 0, day = 0;
-
+    // Map tokens sang giá trị
     tokens.forEach((token, index) => {
-        const val = parseInt(values[index], 10);
-        if (token.toUpperCase().includes('Y')) year = val;
-        else if (token.toUpperCase().includes('M')) month = val;
-        else if (token.toUpperCase().includes('D')) day = val;
+        const val = parseInt(parts[index]);
+        if (token.includes('Y')) year = val;
+        else if (token.includes('M')) month = val;
+        else if (token.includes('D')) day = val;
     });
 
-    if (year < 100) year += 2000; // Xử lý năm dạng 2 chữ số
+    // Xử lý năm 2 chữ số
+    if (year < 100) year += 2000;
 
-    const date = new Date(year, month - 1, day);
-    if (isNaN(date.getTime())) return "Invalid Date";
+    // Validate ngày tháng
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return "Invalid Date";
+    }
 
-    // Map các thành phần cho output
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
+    // Tạo đối tượng Date để validate tiếp
+    const dateObj = new Date(year, month - 1, day);
+    if (isNaN(dateObj.getTime())) {
+        return "Invalid Date";
+    }
+    // Check xem ngày có bị cuộn (overflow) không (VD: 32/01 -> 01/02)
+    if (dateObj.getDate() !== day) {
+        return "Invalid Date";
+    }
 
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+
+    // Trả về theo định dạng đích
     return outputFormat
-        .replace('YYYY', yyyy)
-        .replace('MM', mm)
-        .replace('DD', dd)
-        .replace('YY', String(yyyy).slice(-2));
+        .replace('YYYY', y)
+        .replace('YY', String(y).substr(-2))
+        .replace('MM', m)
+        .replace('DD', d);
 }
 
 module.exports = { formatDate };
